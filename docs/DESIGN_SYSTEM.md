@@ -382,19 +382,19 @@ Rules:
 
 ## Cross-References
 
-- `/home/runner/work/vantoris/vantoris/docs/ARCHITECTURE.md`
-- `/home/runner/work/vantoris/vantoris/docs/COMPONENT_ARCHITECTURE.md`
-- `/home/runner/work/vantoris/vantoris/docs/CODING_STANDARDS.md`
-- `/home/runner/work/vantoris/vantoris/docs/API_ARCHITECTURE.md`
-- `/home/runner/work/vantoris/vantoris/docs/DATABASE_ARCHITECTURE.md`
-- `/home/runner/work/vantoris/vantoris/docs/CI_CD.md`
-- `/home/runner/work/vantoris/vantoris/docs/REPOSITORY_STANDARDS.md`
-- `/home/runner/work/vantoris/vantoris/docs/REPOSITORY_STRUCTURE.md`
+- `docs/ARCHITECTURE.md`
+- `docs/COMPONENT_ARCHITECTURE.md`
+- `docs/CODING_STANDARDS.md`
+- `docs/API_ARCHITECTURE.md`
+- `docs/DATABASE_ARCHITECTURE.md`
+- `docs/CI_CD.md`
+- `docs/REPOSITORY_STANDARDS.md`
+- `docs/REPOSITORY_STRUCTURE.md`
 
 ## Dependencies and Gaps Discovered
 
-- `/home/runner/work/vantoris/vantoris/README.md` references `/home/runner/work/vantoris/vantoris/docs/AUTHENTICATION.md`, `/home/runner/work/vantoris/vantoris/docs/RBAC.md`, `/home/runner/work/vantoris/vantoris/docs/TESTING.md`, and `/home/runner/work/vantoris/vantoris/docs/MIGRATION_GUIDE.md`, but those files are not present in the current checkout.
-- Multiple existing documents reference `/home/runner/work/vantoris/vantoris/docs/SECURITY_STANDARDS.md` and `/home/runner/work/vantoris/vantoris/docs/VERIFICATION_CENTER.md`, which are also not present in the current checkout.
+- `README.md` references `docs/AUTHENTICATION.md`, `docs/RBAC.md`, `docs/TESTING.md`, and `docs/MIGRATION_GUIDE.md`, but those files are not present in the current checkout.
+- Multiple existing documents reference `docs/SECURITY_STANDARDS.md` and `docs/VERIFICATION_CENTER.md`, which are also not present in the current checkout.
 - Repository standards require a shared design-system library after Base44 import, but no application or library code exists yet in this repository.
 - Existing documentation establishes responsive and accessibility expectations, but breakpoint tokens, container width rules, and component-level responsive behavior maps still need implementation artifacts after import.
 
@@ -403,4 +403,4 @@ Rules:
 1. Reconcile the current checkout with the referenced-but-missing documentation so all source-of-truth documents are present together.
 2. Define the canonical responsive breakpoint and container-token set when the shared design-system library is introduced after Base44 import.
 3. Create security and verification standards documents before implementation begins so responsive UI decisions for sensitive flows inherit finalized compliance rules.
-4. Validate this design system against the testing strategy once `/home/runner/work/vantoris/vantoris/docs/TESTING.md` is available in the active checkout.
+4. Validate this design system against the testing strategy once `docs/TESTING.md` is available in the active checkout.
