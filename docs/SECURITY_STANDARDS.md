@@ -44,6 +44,8 @@ Status: normative documentation-only. This document defines the mandatory securi
 ## Session Security & Trusted Devices
 
 - Each account may have a maximum of two active trusted devices.
+- The two-device limit is a platform security policy and must not be overridden or bypassed through local configuration.
+- The two-device limit balances usability and risk by supporting a primary personal device and one additional trusted device while reducing the attack surface of persistent trust relationships.
 - Adding a third trusted device MUST require removal of one existing trusted device before activation.
 - A new trusted device MUST require all of the following:
   - Password authentication
@@ -52,7 +54,14 @@ Status: normative documentation-only. This document defines the mandatory securi
   - Immutable audit logging
 - Trusted device records MUST preserve history and must not be hard-deleted.
 - Sessions must be bound to authenticated identity, device context, and session identifiers.
-- After 5–10 minutes of inactivity, the authenticated session MUST automatically terminate and require full login again.
+- After inactivity, the authenticated session MUST automatically terminate and require full login again.
+- The enforced inactivity timeout MUST be policy-defined within a 5–10 minute range:
+  - 5 minutes for privileged or elevated-risk sessions
+    - Includes administrative sessions
+    - Includes security and compliance sessions
+    - Includes sessions reviewing, editing, approving, or submitting sensitive financial actions
+  - 10 minutes for standard authenticated sessions that are not currently operating in a privileged or elevated-risk context
+- Implementations may warn users before automatic termination, but warnings must not weaken or silently extend the required timeout.
 - High-risk actions MUST always require fresh authentication regardless of current session state.
 - High-risk actions include, at minimum:
   - Transfers
@@ -78,7 +87,7 @@ Status: normative documentation-only. This document defines the mandatory securi
 
 ### Encryption at Rest
 
-- Sensitive data MUST be encrypted at rest in databases, caches where appropriate, object storage, backups, archives, and logs containing protected fields.
+- Sensitive data MUST be encrypted at rest in databases, caches containing sensitive data, object storage, backups, archives, and logs containing protected fields.
 - Database protections may include TDE, column-level encryption, and field-level encryption depending on data sensitivity.
 - Object storage for documents, chat media, exports, and statements MUST use encryption at rest and controlled access policies.
 
@@ -96,21 +105,30 @@ Status: normative documentation-only. This document defines the mandatory securi
 ### Tokenization
 
 - Tokenization is required for card data, payment credentials, and other sensitive payment artifacts where raw values are not needed operationally.
-- Plaintext PAN storage is prohibited.
-- Tokenized references should be used in downstream workflows whenever possible to preserve the unified operating experience without overexposing raw data.
+- Plaintext PAN (Primary Account Number) storage is prohibited.
+- Tokenized references MUST be used in downstream workflows whenever raw values are not operationally required, preserving the unified operating experience without overexposing sensitive data.
 
 ### Key Rotation & KMS Integration
 
 - Encryption keys MUST be managed through a centralized KMS or equivalent managed key platform.
-- AWS KMS, Vault-backed key management, or equivalent approved systems are required for production key custody.
+- AWS KMS, Vault-backed key management, or equivalent approved systems MUST provide production key custody.
+- The approved production allowlist initially includes AWS KMS and Vault-backed key management.
+- An approved key-management system MUST provide:
+  - Centralized administration
+  - Strong access control
+  - Audit logging
+  - Rotation support
+  - Encryption-key custody protections
+  - Completion of a documented security review, threat assessment, and control-mapping review
+  - Formal sign-off by platform and security owners before production use
 - Key rotation MUST be defined and enforced for data encryption keys, service secrets, signing keys, and integration credentials.
-- Envelope encryption should be used for large objects and document/media payloads.
+- Envelope encryption MUST be used for large objects and document/media payloads.
 
 ### Secrets Management
 
 - Secrets must be stored only in approved secret-management systems such as Vault or AWS Secrets Manager.
 - Secrets must never be committed to the repository, embedded in documentation examples as live values, or hardcoded in application logic.
-- Secret access must be least-privilege, time-bounded where possible, and fully auditable.
+- Secret access MUST be least-privilege, time-bounded, and fully auditable.
 
 ## Audit & Security Observability
 
@@ -164,7 +182,7 @@ Status: normative documentation-only. This document defines the mandatory securi
 - Tool permissions are mandatory: AI tool access must be explicitly granted, narrowly scoped, and auditable.
 - Workflow permissions are mandatory: AI-guided workflows must inherit and enforce the same authorization rules as direct user actions.
 - All AI actions, tool calls, workflow executions, prompt renders, memory writes, and permission decisions MUST be audit logged.
-- AI should automate routine workflows inside VANTORIS, but high-risk or regulated actions must still require the same human approval and authentication controls as non-AI flows.
+- AI MUST automate routine workflows inside VANTORIS where authorized, but high-risk or regulated actions MUST still require the same human approval and authentication controls as non-AI flows.
 
 ## Chat & Media Security Standards
 
@@ -193,7 +211,7 @@ Status: normative documentation-only. This document defines the mandatory securi
 - Verification workflows must be stateful, auditable, and explicit; verification-critical states must not be hidden behind ambiguous messaging.
 - Verification artifacts, decisions, and provider responses must be treated as sensitive data with encryption, access control, and retention policies.
 - Verification workflows must stay inside VANTORIS from the user and operator perspective, even when external vendors are used behind the platform.
-- Manual review should be reserved for exceptions, elevated risk, provider failures, or policy/regulatory requirements.
+- Manual review MUST be reserved for exceptions, elevated risk, provider failures, or policy/regulatory requirements.
 
 ## Personalization & Identity Data Handling
 
@@ -203,10 +221,15 @@ Status: normative documentation-only. This document defines the mandatory securi
   - Legal Last Name (required)
   - Preferred Name (optional)
 - Display priority for member-facing and operator-facing interfaces MUST be:
-  1. Preferred Name
-  2. Legal First Name
-  3. Legal First Name + Legal Last Name
+  1. Use Preferred Name when present.
+  2. If Preferred Name is absent, use Legal First Name for compact display contexts.
+  3. If Preferred Name is absent and a fuller non-legal display is needed, use Legal First Name + Legal Last Name.
+- If Preferred Name is present, it remains the default display value even when a fuller non-legal display would otherwise be used.
+- Routine display contexts such as greetings, dashboards, conversation lists, notifications, and standard operator work queues must not include Legal Middle Name.
+- Legal Middle Name must be excluded from routine display contexts unless a legal, compliance, verification, contractual, statement, or regulatory use case requires the complete legal name.
 - Email usernames must never be displayed as member names.
+- Legal-name and preferred-name fields must be protected as sensitive profile data with access controls appropriate to member, operations, support, compliance, and security roles.
+- Changes to legal-name fields and preferred-name fields must be auditable.
 - The complete legal name (Legal First Name + Legal Middle Name + Legal Last Name) MUST be used for:
   - Verification
   - Compliance workflows
@@ -229,19 +252,18 @@ Status: normative documentation-only. This document defines the mandatory securi
 
 - These standards must remain compatible with the future Base44 migration.
 - Imported Base44 code and data must be mapped into the VANTORIS security model rather than bypassing it.
-- Security-sensitive entities, IDs, audit references, and verification/payment records should be preserved wherever feasible during migration.
+- Security-sensitive entities, IDs, audit references, and verification/payment records MUST be preserved during migration except where a documented regulatory, legal, or technical constraint requires an approved transformation.
 - Migration and refactor work must preserve auditability, access controls, data protection, and user-visible personalization rules.
 - No migration step may introduce weaker defaults than the standards defined in this document.
 
 ## Cross-References
 
-- /home/runner/work/vantoris/vantoris/README.md
-- /home/runner/work/vantoris/vantoris/docs/ARCHITECTURE.md
-- /home/runner/work/vantoris/vantoris/docs/COMPONENT_ARCHITECTURE.md
-- /home/runner/work/vantoris/vantoris/docs/REPOSITORY_STRUCTURE.md
-- /home/runner/work/vantoris/vantoris/docs/REPOSITORY_STANDARDS.md
-- /home/runner/work/vantoris/vantoris/docs/CODING_STANDARDS.md
-- /home/runner/work/vantoris/vantoris/docs/CI_CD.md
-- /home/runner/work/vantoris/vantoris/docs/API_ARCHITECTURE.md
-- /home/runner/work/vantoris/vantoris/docs/DATABASE_ARCHITECTURE.md
-
+- ../README.md
+- ARCHITECTURE.md
+- COMPONENT_ARCHITECTURE.md
+- REPOSITORY_STRUCTURE.md
+- REPOSITORY_STANDARDS.md
+- CODING_STANDARDS.md
+- CI_CD.md
+- API_ARCHITECTURE.md
+- DATABASE_ARCHITECTURE.md
