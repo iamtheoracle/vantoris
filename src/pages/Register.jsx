@@ -61,7 +61,7 @@ export default function Register() {
       case 4: return data.street && data.city && data.state && data.zip && data.country;
       case 5: return data.ssn && data.govId && data.selfie;
       case 6: return data.employment && data.annualIncome && data.sourceOfFunds;
-      case 7: return data.userId && data.password && data.confirmPassword && data.securityPin && data.password === data.confirmPassword;
+      case 7: return (data.userId || data.email) && data.password && data.confirmPassword && data.securityPin && data.password === data.confirmPassword;
       case 8: return consents.regulatory && consents.privacy && consents.electronic;
       default: return true;
     }

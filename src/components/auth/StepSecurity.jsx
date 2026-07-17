@@ -1,8 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { TextField, ToggleField } from "@/components/auth/FormField";
 import { Mail, Lock, KeyRound } from "lucide-react";
 
 export default function StepSecurity({ data, updateData }) {
+  // Pre-populate userId from email if the user hasn't explicitly set one.
+  // Without this, the field visually shows data.email but data.userId stays ""
+  // and isStepValid() never passes.
+  useEffect(() => {
+    if (!data.userId && data.email) {
+      updateData({ userId: data.email });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="space-y-4">
       <TextField
