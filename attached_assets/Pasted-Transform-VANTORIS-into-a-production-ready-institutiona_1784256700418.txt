@@ -1,0 +1,476 @@
+Transform VANTORIS into a production-ready institutional banking platform.
+
+Do not create demo pages.
+Do not leave placeholders.
+Do not leave "Coming Soon" dialogs.
+Replace every placeholder with a complete working workflow connected to the existing Base44 backend where backend support exists. If backend support does not exist, hide the feature until it is implemented rather than displaying a placeholder.
+
+====================================
+GLOBAL REQUIREMENTS
+====================================
+
+Maintain the existing premium VANTORIS design.
+
+Do not break existing routing.
+
+Keep the application responsive across:
+- Mobile
+- Tablet
+- Desktop
+- Large displays
+
+Remove all dead buttons.
+
+Every navigation item must perform a meaningful action.
+
+====================================
+HOME
+====================================
+
+Display the member's full legal name using:
+
+Preferred Name (if set)
+otherwise
+First Name + Last Name
+
+Never display usernames like:
+
+coltonhogan444
+
+Replace every username display with the proper member name.
+
+Greeting example:
+
+Good Morning,
+Colton Hogan
+
+====================================
+ACCOUNTS
+====================================
+
+Keep Accounts fully functional.
+
+Improve:
+
+- Account details
+- Transactions
+- Statements
+- Account history
+- Search
+- Filters
+- Account actions
+
+Statement generation must use real transaction history.
+
+====================================
+STATEMENTS
+====================================
+
+Generate professional downloadable PDF statements.
+
+Each PDF must contain:
+
+Institution branding
+
+Member Full Name
+
+Account Name
+
+Masked Account Number
+
+Statement Period
+
+Opening Balance
+
+Closing Balance
+
+Available Balance
+
+Every transaction including:
+
+Date
+
+Time
+
+Description
+
+Reference
+
+Debit
+
+Credit
+
+Running Balance
+
+Fees
+
+Interest
+
+Pending transactions
+
+Totals
+
+Page numbers
+
+Institution footer
+
+Generate real PDFs.
+
+Do not generate placeholder documents.
+
+====================================
+TRANSACTION HISTORY
+====================================
+
+Every account must maintain complete transaction history.
+
+Include:
+
+Deposits
+
+Withdrawals
+
+Transfers
+
+Internal transfers
+
+Investment funding
+
+Investment withdrawals
+
+Card activity
+
+Wire activity
+
+ACH activity
+
+Fees
+
+Interest
+
+Pending
+
+Completed
+
+Failed
+
+Reversed
+
+History powers:
+
+Statements
+
+Search
+
+Analytics
+
+Export
+
+====================================
+MOVE MONEY
+====================================
+
+Remove every Coming Soon screen.
+
+Implement:
+
+Internal Transfer
+
+Member Transfer
+
+Wire Transfer
+
+ACH
+
+Zelle integration placeholder only if backend unavailable.
+
+Every workflow must have:
+
+Validation
+
+Review
+
+Confirmation
+
+Receipt
+
+History
+
+Notifications
+
+====================================
+INVESTMENTS
+====================================
+
+Make Investments as complete as Accounts.
+
+Investment accounts must support:
+
+Overview
+
+Portfolio
+
+Performance
+
+Transactions
+
+Funding
+
+Withdrawals
+
+Orders
+
+History
+
+Statements
+
+Watchlists
+
+Market data
+
+Charts
+
+Positions
+
+Profit/Loss
+
+Allocation
+
+Performance graphs
+
+Investment account detail pages
+
+Investment account history
+
+Investment PDFs
+
+Funding from bank accounts
+
+Transfer back to bank accounts
+
+No demo cards.
+
+No placeholder balances.
+
+Use backend entities where available.
+
+====================================
+AI ASSISTANT
+====================================
+
+Replace the current assistant with a true banking assistant.
+
+Capabilities:
+
+Answer account questions
+
+Explain balances
+
+Explain transactions
+
+Explain investments
+
+Locate statements
+
+Summarize portfolios
+
+Guide applications
+
+Explain verification
+
+Locate documents
+
+Guide transfers
+
+Generate summaries
+
+Search knowledge
+
+Surface relevant account information according to permissions.
+
+The assistant must never expose another member's data.
+
+====================================
+AI DEVELOPMENT MODE
+====================================
+
+Add a separate Administrator-only AI mode.
+
+This mode is available only to authorized operations/developer users.
+
+Capabilities:
+
+Review project structure
+
+Analyze code
+
+Suggest improvements
+
+Generate code suggestions
+
+Review components
+
+Review logs
+
+Generate pull requests or patches
+
+Run tests
+
+Recommend deployments
+
+Deployment or publishing must always require explicit administrator approval before execution.
+
+Never allow ordinary members to edit source code or publish the application.
+
+====================================
+OPERATIONS
+====================================
+
+Complete Operations Center.
+
+Applications
+
+Approvals
+
+Rejections
+
+Risk
+
+Verification
+
+Members
+
+Accounts
+
+Investments
+
+Audit Logs
+
+Documents
+
+Notifications
+
+====================================
+MEMBER PROFILE
+====================================
+
+Store:
+
+First Name
+
+Middle Name
+
+Last Name
+
+Preferred Name
+
+Suffix
+
+Display:
+
+Preferred Name
+
+or
+
+First + Last
+
+Never display usernames in member-facing screens.
+
+====================================
+NOTIFICATIONS
+====================================
+
+Real notifications for:
+
+Transfers
+
+Deposits
+
+Withdrawals
+
+Applications
+
+Approvals
+
+Investment activity
+
+Statements
+
+Cards
+
+====================================
+SERVICES
+====================================
+
+Implement:
+
+Joint Accounts
+
+Business Accounts
+
+Cards
+
+Investment Requests
+
+Trading Services
+
+Support Requests
+
+If unavailable, disable the option instead of showing Coming Soon.
+
+====================================
+AUDIT
+====================================
+
+Log:
+
+Logins
+
+Transfers
+
+Downloads
+
+Statements
+
+Investment Orders
+
+Profile Changes
+
+Administrator Actions
+
+====================================
+SECURITY
+====================================
+
+Mask sensitive data.
+
+Protect administrator features.
+
+Enforce role-based permissions.
+
+====================================
+FINAL REQUIREMENT
+====================================
+
+Search the entire project.
+
+Remove every remaining:
+
+"Coming Soon"
+
+"This feature is being prepared"
+
+Placeholder modal
+
+Dead button
+
+Dummy workflow
+
+Replace them with fully working production workflows where backend support exists.
+
+At the end, produce a report listing:
+
+- Every feature completed
+- Every feature connected to Base44
+- Any remaining backend dependencies that genuinely require new backend implementation
+- Any features intentionally hidden because backend support does not yet exist

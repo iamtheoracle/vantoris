@@ -1,0 +1,3 @@
+- [Member name display](member-name.md) — use `getMemberDisplayName(user)` from `src/lib/memberName.js`; never display email/username as a member name
+- [MoveMoney architecture](move-money.md) — real workflows (ACH/Wire/Send/Request/DepositCheck) wired to WithdrawalRequest + Transaction entities; QR/Crypto/Currency/Scheduled/Recurring removed (no backend)
+- [Admin AI Dev Mode](admin-ai-mode.md) — route `/operations/ai-dev-mode` (AdminAIMode.jsx); role-gated to admin/developer/executive/ops; all actions require human approval; audited via logAuditEntry

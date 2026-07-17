@@ -51,6 +51,7 @@ const WORKSPACE_CONFIG = {
         label: 'AI & Administration',
         items: [
           { label: 'AI Executive Insights', path: '/operations/assistant', icon: Bot },
+          { label: 'AI Dev Mode', path: '/operations/ai-dev-mode', icon: Code },
           { label: 'Configuration', path: '/operations/configuration', icon: Settings },
           { label: 'Feature Flags', path: '/operations/feature-flags', icon: Flag },
           { label: 'System Health', path: '/operations/system-health', icon: HeartPulse },

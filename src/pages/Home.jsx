@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { getMemberDisplayName, getGreeting } from '@/lib/memberName';
 import { useNavigate } from 'react-router-dom';
 import ShieldLogo from '@/components/vantoris/ShieldLogo';
 import StatusBadge from '@/components/vantoris/StatusBadge';
@@ -114,9 +115,9 @@ export default function Home() {
     .filter(t => t.type === 'withdrawal')
     .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
   const availableBalance = totalBalance - pendingAmount;
-  const firstName = user?.full_name?.split(' ')[0] || 'Member';
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const displayName = getMemberDisplayName(user);
+  const firstName = displayName; // passed to header/concierge as full display name
+  const greeting = getGreeting();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Onboarding: no application yet

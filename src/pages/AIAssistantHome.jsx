@@ -1,45 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Plus, Search, Zap, Clock, Star, AlertCircle, Briefcase, DollarSign, FileText, Users } from 'lucide-react';
+import { getMemberDisplayName } from '@/lib/memberName';
+import {
+  MessageSquare, Plus, Zap, Clock, Briefcase,
+  DollarSign, FileText, Users, AlertCircle, ChevronRight,
+} from 'lucide-react';
+import { formatCurrency } from '@/lib/formatCurrency';
 
 export default function AIAssistantHome() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [recentConversations, setRecentConversations] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function loadData() {
       try {
         const me = await base44.auth.me();
         setUser(me);
+        const [accts, convs] = await Promise.all([
+          base44.entities.Account.filter({ user_id: me.id }).catch(() => []),
+          base44.entities.MessageThread.filter({ user_id: me.id }, '-created_date', 5).catch(() => []),
+        ]);
+        setAccounts(accts);
+        setThreads(convs);
       } catch (e) { console.error(e); }
       setLoading(false);
     }
     loadData();
   }, []);
 
+  const displayName = getMemberDisplayName(user);
+  const totalBalance = accounts.reduce((s, a) => s + (a.balance || 0), 0);
+
   const suggestedActions = [
+    { label: 'View Accounts', icon: DollarSign, action: () => navigate('/accounts') },
     { label: 'Generate Statement', icon: FileText, action: () => navigate('/advisor?action=statement') },
-    { label: 'Continue KYC', icon: AlertCircle, action: () => navigate('/advisor?action=kyc') },
-    { label: 'Upload Documents', icon: Plus, action: () => navigate('/documents') },
-    { label: 'View Transactions', icon: DollarSign, action: () => navigate('/advisor?action=transactions') },
-    { label: 'Portfolio Summary', icon: Briefcase, action: () => navigate('/advisor?action=portfolio') },
+    { label: 'Move Money', icon: Briefcase, action: () => navigate('/move-money') },
+    { label: 'Continue KYC', icon: AlertCircle, action: () => navigate('/apply/kyc') },
+    { label: 'My Documents', icon: FileText, action: () => navigate('/documents') },
     { label: 'Contact Support', icon: Users, action: () => navigate('/messages') },
   ];
 
   const smartPrompts = [
-    'Where is my KYC?',
+    'What is my current balance?',
+    'Show my recent transactions',
     'Generate my latest statement',
-    'Show today\'s transactions',
     'Explain my portfolio',
-    'Continue onboarding',
+    'How do I transfer money?',
+    'Where is my KYC status?',
   ];
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-brass/30 border-t-brass rounded-full animate-spin" /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0E1A2B]">
+        <div className="w-8 h-8 border-2 border-brass/30 border-t-brass rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -50,10 +69,10 @@ export default function AIAssistantHome() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                <MessageSquare size={28} className="text-brass" />
+                <MessageSquare size={26} className="text-brass" />
                 VANTORIS Guide
               </h1>
-              <p className="text-[#AAB4C3] text-xs mt-1">Enterprise AI Workspace</p>
+              <p className="text-[#AAB4C3] text-xs mt-0.5">AI Banking Assistant</p>
             </div>
             <button
               onClick={() => navigate('/advisor')}
@@ -66,48 +85,46 @@ export default function AIAssistantHome() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-8">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-br from-brass/10 to-transparent border border-brass/20 rounded-2xl p-6 md:p-8">
-          <h2 className="text-xl font-semibold mb-2">Welcome back, {user?.full_name || 'Member'}</h2>
-          <p className="text-[#AAB4C3] text-sm mb-4">
-            I'm your intelligent AI co-pilot for VANTORIS. I can help you with documents, accounts, transactions, onboarding, and more.
+        {/* Welcome card */}
+        <div className="bg-gradient-to-br from-brass/10 to-transparent border border-brass/20 rounded-2xl p-6">
+          <h2 className="text-xl font-semibold mb-1">Welcome back, {displayName}</h2>
+          <p className="text-[#AAB4C3] text-sm mb-5">
+            I'm your VANTORIS AI assistant. Ask me about your accounts, transactions, investments, or anything else.
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div className="bg-[#242D38]/40 rounded-lg p-3 border border-[#242D38]">
-              <p className="text-[#AAB4C3] mb-1">Role</p>
-              <p className="font-semibold text-white capitalize">{user?.role || '—'}</p>
+          {accounts.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              <div className="bg-[#242D38]/60 rounded-lg p-3 border border-[#242D38]">
+                <p className="text-[#AAB4C3] mb-1">Total Balance</p>
+                <p className="font-bold text-white text-base">{formatCurrency(totalBalance)}</p>
+              </div>
+              <div className="bg-[#242D38]/60 rounded-lg p-3 border border-[#242D38]">
+                <p className="text-[#AAB4C3] mb-1">Accounts</p>
+                <p className="font-bold text-white text-base">{accounts.length}</p>
+              </div>
+              <div className="bg-[#242D38]/60 rounded-lg p-3 border border-[#242D38] col-span-2 md:col-span-1">
+                <p className="text-[#AAB4C3] mb-1">AI Status</p>
+                <p className="font-bold text-emerald-400 text-base">Ready</p>
+              </div>
             </div>
-            <div className="bg-[#242D38]/40 rounded-lg p-3 border border-[#242D38]">
-              <p className="text-[#AAB4C3] mb-1">Status</p>
-              <p className="font-semibold text-emerald-400">Online</p>
-            </div>
-            <div className="bg-[#242D38]/40 rounded-lg p-3 border border-[#242D38]">
-              <p className="text-[#AAB4C3] mb-1">AI Status</p>
-              <p className="font-semibold text-emerald-400">Ready</p>
-            </div>
-            <div className="bg-[#242D38]/40 rounded-lg p-3 border border-[#242D38]">
-              <p className="text-[#AAB4C3] mb-1">Last Sync</p>
-              <p className="font-semibold text-white">Just now</p>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Smart Prompts */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Zap size={20} className="text-brass" />
-            Smart Prompts
+          <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <Zap size={18} className="text-brass" />
+            Suggested Questions
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {smartPrompts.map((prompt, idx) => (
               <button
                 key={idx}
                 onClick={() => navigate(`/advisor?prompt=${encodeURIComponent(prompt)}`)}
-                className="text-left p-4 bg-[#242D38] hover:bg-[#2a3340] border border-[#242D38] rounded-xl transition-all text-sm text-[#AAB4C3] hover:text-white"
+                className="text-left px-4 py-3 bg-[#242D38] hover:bg-[#2a3340] border border-[#242D38] hover:border-brass/30 rounded-xl transition-all text-sm text-[#AAB4C3] hover:text-white flex items-center justify-between gap-2"
               >
-                {prompt}
+                <span>{prompt}</span>
+                <ChevronRight size={14} className="flex-shrink-0 opacity-40" />
               </button>
             ))}
           </div>
@@ -115,8 +132,8 @@ export default function AIAssistantHome() {
 
         {/* Quick Actions */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Briefcase size={20} className="text-brass" />
+          <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <Briefcase size={18} className="text-brass" />
             Quick Actions
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -128,7 +145,7 @@ export default function AIAssistantHome() {
                   onClick={action.action}
                   className="p-4 bg-[#242D38] hover:bg-[#2a3340] border border-[#242D38] hover:border-brass/30 rounded-xl transition-all text-center"
                 >
-                  <Icon size={24} className="text-brass mx-auto mb-2" />
+                  <Icon size={22} className="text-brass mx-auto mb-2" />
                   <p className="text-white text-xs font-medium">{action.label}</p>
                 </button>
               );
@@ -138,41 +155,53 @@ export default function AIAssistantHome() {
 
         {/* Recent Conversations */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Clock size={20} className="text-brass" />
+          <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <Clock size={18} className="text-brass" />
             Recent Conversations
           </h3>
-          <div className="bg-[#242D38]/30 border border-[#242D38] rounded-xl p-8 text-center">
-            <MessageSquare size={32} className="text-[#AAB4C3]/40 mx-auto mb-3" />
-            <p className="text-[#AAB4C3] text-sm">No recent conversations yet</p>
-            <button
-              onClick={() => navigate('/advisor')}
-              className="mt-3 text-brass text-xs font-semibold hover:underline"
-            >
-              Start your first conversation
-            </button>
-          </div>
-        </div>
-
-        {/* Platform Resources */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FileText size={20} className="text-brass" />
-            Platform Resources
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { title: 'How KYC Works', desc: 'Learn about document verification' },
-              { title: 'Account Types', desc: 'Understand your account options' },
-              { title: 'Transaction Guide', desc: 'Deposits, withdrawals & more' },
-              { title: 'Portfolio Basics', desc: 'Manage your investments' },
-            ].map((res, idx) => (
-              <div key={idx} className="p-4 bg-[#242D38]/40 border border-[#242D38] rounded-xl">
-                <p className="text-white text-sm font-medium">{res.title}</p>
-                <p className="text-[#AAB4C3] text-xs mt-1">{res.desc}</p>
-              </div>
-            ))}
-          </div>
+          {threads.length === 0 ? (
+            <div className="bg-[#242D38]/30 border border-[#242D38] rounded-xl p-8 text-center">
+              <MessageSquare size={28} className="text-[#AAB4C3]/40 mx-auto mb-3" />
+              <p className="text-[#AAB4C3] text-sm">No conversations yet</p>
+              <button
+                onClick={() => navigate('/advisor')}
+                className="mt-3 text-brass text-xs font-semibold hover:underline"
+              >
+                Start your first conversation →
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {threads.map(thread => (
+                <button
+                  key={thread.id}
+                  onClick={() => navigate(`/advisor?thread=${thread.id}`)}
+                  className="w-full text-left px-4 py-3 bg-[#242D38]/50 hover:bg-[#242D38] border border-[#242D38] hover:border-brass/20 rounded-xl transition-all flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-brass/15 flex items-center justify-center flex-shrink-0">
+                      <MessageSquare size={14} className="text-brass" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">
+                        {thread.subject || thread.channel || 'Conversation'}
+                      </p>
+                      <p className="text-[#AAB4C3] text-xs">
+                        {thread.created_date ? new Date(thread.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-[#AAB4C3]/40 flex-shrink-0" />
+                </button>
+              ))}
+              <button
+                onClick={() => navigate('/messages')}
+                className="w-full text-center text-brass text-xs font-semibold py-2 hover:underline"
+              >
+                View all messages →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

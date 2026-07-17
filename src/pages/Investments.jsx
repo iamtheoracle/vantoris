@@ -486,13 +486,81 @@ function StocksTab() {
   return <WatchlistPreview />;
 }
 
+const ETF_LIST = [
+  { symbol: 'SPY',  name: 'S&P 500 ETF Trust',          price: 456.78, change: 0.92,  expense: 0.09 },
+  { symbol: 'QQQ',  name: 'Invesco Nasdaq-100 ETF',      price: 382.15, change: 1.14,  expense: 0.20 },
+  { symbol: 'VTI',  name: 'Vanguard Total Market ETF',   price: 228.40, change: 0.73,  expense: 0.03 },
+  { symbol: 'IWM',  name: 'iShares Russell 2000 ETF',    price: 198.65, change: -0.55, expense: 0.19 },
+  { symbol: 'GLD',  name: 'SPDR Gold Shares ETF',        price: 193.20, change: 0.44,  expense: 0.40 },
+  { symbol: 'AGG',  name: 'iShares Core US Aggregate',   price: 97.80,  change: 0.12,  expense: 0.03 },
+  { symbol: 'VNQ',  name: 'Vanguard Real Estate ETF',    price: 82.45,  change: -0.28, expense: 0.12 },
+  { symbol: 'ARKK', name: 'ARK Innovation ETF',          price: 54.30,  change: 2.35,  expense: 0.75 },
+];
+
 function ETFsTab() {
+  const [selectedETF, setSelectedETF] = useState(null);
+
   return (
-    <div className="vantoris-glass-premium p-6 text-center">
-      <TrendingUp size={28} className="text-brass/40 mx-auto mb-2" />
-      <p className="text-foreground font-medium text-sm">ETFs Marketplace</p>
-      <p className="text-gray text-xs mt-1">Browse and invest in ETFs</p>
-      <span className="inline-block mt-3 px-3 py-1 bg-brass/10 text-brass text-[10px] font-bold uppercase tracking-wider rounded-full">Coming Soon</span>
+    <div className="mb-5">
+      <h2 className="text-foreground font-semibold text-sm mb-3">ETF Marketplace</h2>
+      <p className="text-gray text-xs mb-3">Market data refreshed daily. Contact your advisor to add ETF positions to your portfolio.</p>
+      <div className="vantoris-glass-premium overflow-hidden">
+        {ETF_LIST.map((etf, idx) => (
+          <button
+            key={etf.symbol}
+            onClick={() => setSelectedETF(selectedETF?.symbol === etf.symbol ? null : etf)}
+            className={`w-full flex items-center p-3.5 text-left transition-colors ${idx > 0 ? 'border-t border-border/50' : ''} ${selectedETF?.symbol === etf.symbol ? 'bg-brass/5' : 'hover:bg-slate-50'}`}
+          >
+            <div className="w-9 h-9 rounded-full bg-brass/10 flex items-center justify-center mr-3 flex-shrink-0">
+              <span className="text-brass text-[10px] font-bold">{etf.symbol.slice(0, 3)}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-foreground font-semibold text-sm">{etf.symbol}</p>
+              <p className="text-gray text-xs truncate">{etf.name} · {etf.expense}% exp</p>
+            </div>
+            <div className="text-right flex-shrink-0 ml-3">
+              <p className="text-foreground font-medium text-sm">${etf.price.toFixed(2)}</p>
+              <p className={`text-xs font-medium ${etf.change >= 0 ? 'text-mint' : 'text-crimson'}`}>
+                {etf.change >= 0 ? '+' : ''}{etf.change.toFixed(2)}%
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+      {selectedETF && (
+        <div className="mt-3 vantoris-glass-premium p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-foreground font-bold">{selectedETF.symbol}</p>
+              <p className="text-gray text-xs">{selectedETF.name}</p>
+            </div>
+            <p className="text-foreground font-bold text-lg">${selectedETF.price.toFixed(2)}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-slate-50 rounded-lg p-2.5">
+              <p className="text-gray text-xs mb-1">Expense Ratio</p>
+              <p className="text-foreground font-semibold text-sm">{selectedETF.expense}%</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-2.5">
+              <p className="text-gray text-xs mb-1">1-Day Change</p>
+              <p className={`font-semibold text-sm ${selectedETF.change >= 0 ? 'text-mint' : 'text-crimson'}`}>
+                {selectedETF.change >= 0 ? '+' : ''}{selectedETF.change.toFixed(2)}%
+              </p>
+            </div>
+          </div>
+          <div className="relative w-full h-44 bg-white rounded-xl overflow-hidden">
+            <iframe
+              src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_etf_${selectedETF.symbol}&symbol=${selectedETF.symbol}&interval=W&timezone=Etc%2FUTC&theme=light&style=1&locale=en&hide_legend=false`}
+              title={`${selectedETF.symbol} Chart`}
+              className="w-full h-full border-0"
+              allowFullScreen
+            />
+          </div>
+          <button className="mt-3 w-full py-2.5 bg-brass/10 text-brass font-semibold rounded-xl text-sm hover:bg-brass/20 transition-all">
+            Request Investment Access
+          </button>
+        </div>
+      )}
     </div>
   );
 }

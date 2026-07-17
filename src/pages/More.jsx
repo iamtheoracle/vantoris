@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useWhatsAppConfig, whatsappLinkFromConfig } from '@/hooks/useWhatsAppConfig';
 import {
-  User, Shield, Bell, Settings, Gift, Users, Calendar,
+  User, Shield, Bell, Settings, Users, Calendar,
   FileText, CreditCard, MessageCircle, HelpCircle, Info,
   ShieldCheck, FileCheck, History, Lock, LogOut,
   ChevronRight, Sparkles, Award, ScrollText, Phone,
@@ -46,7 +46,6 @@ const SECTIONS = [
     items: [
       { id: 'kyc', label: 'Identity Verification', desc: 'KYC / KYB status', icon: ShieldCheck, route: '/apply/kyc', color: 'bg-brass/10 text-brass' },
       { id: 'activity', label: 'Activity History', desc: 'Recent account activity', icon: History, route: '/accounts', color: 'bg-gray-100 text-gray' },
-      { id: 'rewards', label: 'Rewards', desc: 'Points & rewards', icon: Gift, color: 'bg-amber-500/10 text-amber-600' },
     ],
   },
   {
