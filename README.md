@@ -1,70 +1,77 @@
-# VANTORIS: Enterprise Financial Operations Platform
+# Base44 Project
 
-## Overview
+Use this repository to run and edit the app locally, then publish changes back through Base44.
 
-VANTORIS is a comprehensive, enterprise-grade financial operations platform designed for private banking, wealth management, and premium fintech services. The platform provides integrated banking operations, member management, administrative controls, and advanced AI-powered advisory services.
+Any change pushed to the repo will also be reflected in the Base44 Builder.
 
-## Platform Architecture
+## Prerequisites
 
-### Core Modules
+1. Clone the repository using the project's Git URL.
+2. Navigate to the project directory.
+3. Install dependencies: `npm install`.
+4. Install the Base44 CLI: `npm install -g base44@latest`.
 
-- **Member Center**: Customer-facing banking interface with accounts, transfers, investments, and crypto management
-- **Operations Center**: Administrative dashboard for transaction monitoring, reporting, and operational control
-- **Executive Administration**: Enterprise-level configuration, user management, and compliance settings
-- **Security & Compliance Administration**: Security policies, audit logs, threat detection, and regulatory compliance
-- **Member Advisor**: Premium AI-powered banking relationship manager with multi-channel support
+See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
 
-### Key Features
+## Run Locally
 
-- Modern banking onboarding with KYC/AML integration
-- Real-time account management and fund transfers
-- Investment and cryptocurrency trading
-- Advanced messaging with AI support
-- Trusted device management with single active device model
-- Enterprise-grade security and compliance
-- Multi-channel support (Web, Mobile, WhatsApp, Instagram)
+Run the full local development environment from the project root:
 
-## Repository Structure
+```bash
+base44 dev
+```
 
-See [REPOSITORY_STRUCTURE.md](./docs/REPOSITORY_STRUCTURE.md) for complete folder architecture.
+`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
 
-## Documentation
+For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
 
-- [Architecture Guide](./docs/ARCHITECTURE.md)
-- [Design System](./docs/DESIGN_SYSTEM.md)
-- [Component Architecture](./docs/COMPONENT_ARCHITECTURE.md)
-- [API Architecture](./docs/API_ARCHITECTURE.md)
-- [Database Architecture](./docs/DATABASE_ARCHITECTURE.md)
-- [Authentication & Security](./docs/AUTHENTICATION.md)
-- [RBAC & Permissions](./docs/RBAC.md)
-- [Testing Strategy](./docs/TESTING.md)
-- [CI/CD & Deployment](./docs/CI_CD.md)
-- [Migration Guide](./docs/MIGRATION_GUIDE.md)
+```json5
+{
+  "site": {
+    "serveCommand": "npm run dev"
+  }
+}
+```
 
-## Getting Started
+In a Base44 project this lives in `base44/config.jsonc`.
 
-1. Review [Architecture Guide](./docs/ARCHITECTURE.md)
-2. Understand [Component Architecture](./docs/COMPONENT_ARCHITECTURE.md)
-3. Study [API Architecture](./docs/API_ARCHITECTURE.md)
-4. Review [RBAC & Permissions](./docs/RBAC.md)
-5. Follow [Migration Guide](./docs/MIGRATION_GUIDE.md)
+## Run Only The Frontend
 
-## Development Standards
+If you only want to work on the frontend against the hosted Base44 backend, run:
 
-- See [CODING_STANDARDS.md](./docs/CODING_STANDARDS.md)
-- See [SECURITY_STANDARDS.md](./docs/SECURITY_STANDARDS.md)
-- See [DOCUMENTATION_STANDARDS.md](./docs/DOCUMENTATION_STANDARDS.md)
+```bash
+npm run dev
+```
 
-## Status
+Open the local URL printed by Vite.
 
-This repository is configured to serve as the production source of truth for VANTORIS. The codebase is being prepared for migration from the Base44 development environment.
+## Use The Hosted Backend
 
-**Current Phase**: Repository preparation and foundational architecture definition
+For frontend-only development, create or update `.env.local` in the project root:
 
-**Next Phase**: Base44 source export and organization according to defined structure
+```bash
+VITE_BASE44_APP_ID=your_app_id
+VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
+```
 
-**Subsequent Phases**: Refactoring, testing, optimization, and production deployment
+`VITE_BASE44_APP_ID` identifies the Base44 app.
 
-## License
+`VITE_BASE44_APP_BASE_URL` tells the Base44 Vite plugin where to send local `/api` requests. Point it at your deployed Base44 app URL when you want the local frontend to use the hosted backend.
 
-Proprietary - All rights reserved
+When you use `base44 dev`, the command injects the local Base44 values for you, so `.env.local` is mainly needed for frontend-only workflows.
+
+## Publish Your Changes
+
+After pushing your changes to git, open the Base44 dashboard and publish the app:
+
+```bash
+base44 dashboard open
+```
+
+## Docs & Support
+
+Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+
+Base44 CLI command reference: [https://docs.base44.com/developers/references/cli/commands/introduction](https://docs.base44.com/developers/references/cli/commands/introduction)
+
+Support: [https://app.base44.com/support](https://app.base44.com/support)

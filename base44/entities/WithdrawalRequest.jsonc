@@ -1,0 +1,50 @@
+{
+  "name": "WithdrawalRequest",
+  "type": "object",
+  "properties": {
+    "account_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "Bank Transfer",
+        "Wire Transfer",
+        "Crypto Withdrawal",
+        "Internal Transfer",
+        "ACH Transfer",
+        "Domestic Wire",
+        "International Wire",
+        "External Linked Bank",
+        "Check by Mail"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "account_id",
+    "user_id",
+    "amount",
+    "method"
+  ]
+}
