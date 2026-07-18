@@ -1,19 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Loader2,
-  Sparkles,
-  Shield,
-  Phone,
-  MessageCircle,
-  Calendar,
-  Mail,
-  ChevronRight,
-  Star,
-  Trash2,
-  Clock,
+  Sparkles, Shield, MessageCircle, Calendar,
+  ChevronRight, Star, Trash2, Clock, Search, X, Plus, Download,
+  FileText, Mic, AlertCircle,
 } from 'lucide-react';
 import { getMessageKey, isStarred, toggleStar, addDeletedId, getDeletedIds } from '@/lib/starredMessages';
 import VantorisMonogram from '@/components/vantoris/brand/VantorisMonogram';
@@ -22,14 +14,14 @@ import ChatMessage from '@/components/vantoris/chat/ChatMessage';
 import ChatInputBar from '@/components/vantoris/chat/ChatInputBar';
 import BankingCards from '@/components/vantoris/chat/BankingCards';
 import TypingIndicator from '@/components/vantoris/chat/TypingIndicator';
-import { useWhatsAppConfig } from '@/hooks/useWhatsAppConfig';
+import { useWhatsAppConfig, whatsappLinkFromConfig } from '@/hooks/useWhatsAppConfig';
 import { useToast } from '@/components/ui/use-toast';
 
 const SUGGESTIONS = [
   'What is my current account balance?',
   'Show me my recent transactions',
   'What is my KYC status?',
-  'What services can I request?',
+  'How do I request a wire transfer?',
 ];
 
 function DateSeparator({ label }) {
@@ -62,6 +54,54 @@ function shouldShowDateSeparator(messages, idx) {
   return prevDate !== currDate;
 }
 
+// ── Attachment Bubble ──
+function AttachmentBubble({ attachment, isUser }) {
+  const isImage = attachment.type === 'image';
+  const isVoice = attachment.type === 'voice';
+
+  if (isImage && attachment.url) {
+    return (
+      <div className="mt-1 max-w-[220px] rounded-xl overflow-hidden border border-slate-200">
+        <img src={attachment.url} alt={attachment.name} className="w-full object-cover" />
+        <div className="px-2 py-1 flex items-center justify-between bg-slate-50">
+          <span className="text-[10px] text-gray truncate">{attachment.name}</span>
+          <a href={attachment.url} download target="_blank" rel="noopener noreferrer" className="ml-2 flex-shrink-0">
+            <Download size={12} className="text-brass" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (isVoice) {
+    return (
+      <div className="mt-1 flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2 max-w-[200px]">
+        <Mic size={14} className="text-brass flex-shrink-0" />
+        <div className="flex-1">
+          <p className="text-[10px] text-gray">Voice note</p>
+          <p className="text-foreground text-xs font-medium">{attachment.duration || '0:03'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Document / PDF
+  return (
+    <div className="mt-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 max-w-[220px]">
+      <FileText size={16} className="text-brass flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-foreground text-xs font-medium truncate">{attachment.name || 'Attachment'}</p>
+        {attachment.size && <p className="text-gray text-[10px]">{(attachment.size / 1024).toFixed(1)} KB</p>}
+      </div>
+      {attachment.url && (
+        <a href={attachment.url} download target="_blank" rel="noopener noreferrer">
+          <Download size={12} className="text-brass" />
+        </a>
+      )}
+    </div>
+  );
+}
+
 export default function MemberAdvisorChat() {
   const [activeTab, setActiveTab] = useState('advisor');
   const [conversations, setConversations] = useState([]);
@@ -71,7 +111,12 @@ export default function MemberAdvisorChat() {
   const [loadingConv, setLoadingConv] = useState(true);
   const [starredOnly, setStarredOnly] = useState(false);
   const [starredVersion, setStarredVersion] = useState(0);
+  // Search
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const messagesEndRef = useRef(null);
+  const searchRef = useRef(null);
   const whatsappNumber = useWhatsAppConfig();
   const { toast } = useToast();
 
@@ -95,8 +140,25 @@ export default function MemberAdvisorChat() {
   }, [activeConv, activeTab]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+    if (!showSearch) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, loading, showSearch]);
+
+  useEffect(() => {
+    if (showSearch) searchRef.current?.focus();
+  }, [showSearch]);
+
+  // Search through messages
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const q = searchQuery.toLowerCase();
+    const allMessages = conversations.flatMap(conv =>
+      (conv.messages || []).map(m => ({ ...m, convId: conv.id, convName: conv.metadata?.name }))
+    );
+    const found = allMessages.filter(m => m.content?.toLowerCase().includes(q));
+    setSearchResults(found.slice(0, 50));
+  }, [searchQuery, conversations]);
 
   async function loadConversations() {
     setLoadingConv(true);
@@ -135,7 +197,7 @@ export default function MemberAdvisorChat() {
   async function generateConversationTitle(firstMessage) {
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Generate a very short title (3-6 words, no quotes, no trailing punctuation) for a conversation that starts with this message:\n\n"${firstMessage}"\n\nTitle:`,
+        prompt: `Generate a very short title (3-6 words, no quotes, no trailing punctuation) for a banking conversation that starts with:\n\n"${firstMessage}"\n\nTitle:`,
       });
       const title = (typeof result === 'string' ? result : (result.response || result.result || '')).trim();
       return title.slice(0, 60) || firstMessage.slice(0, 40);
@@ -146,9 +208,8 @@ export default function MemberAdvisorChat() {
 
   async function sendMessage(text) {
     if (!text.trim() || loading) return;
-
     setLoading(true);
-    setMessages((prev) => [...prev, { role: 'user', content: text, created_date: new Date().toISOString() }]);
+    setMessages(prev => [...prev, { role: 'user', content: text, created_date: new Date().toISOString() }]);
 
     let conv = activeConv;
     if (!conv) {
@@ -158,7 +219,7 @@ export default function MemberAdvisorChat() {
         metadata: { name: title, description: 'Member advisory chat' },
       });
       if (!conv.metadata) conv.metadata = { name: title };
-      setConversations([conv, ...conversations]);
+      setConversations(prev => [conv, ...prev]);
       setActiveConv(conv);
     }
 
@@ -166,10 +227,28 @@ export default function MemberAdvisorChat() {
       await base44.agents.addMessage(conv, { role: 'user', content: text });
     } catch (e) {
       console.error('Send message error:', e);
-      toast({ title: 'Message failed', description: e.message || 'Unable to send message. Please try again.', variant: 'destructive' });
+      toast({ title: 'Message failed', description: e.message || 'Unable to send message.', variant: 'destructive' });
       setLoading(false);
     }
   }
+
+  async function sendAttachment(attachment) {
+    if (loading) return;
+    const text = attachment.type === 'image'
+      ? `[📷 Image: ${attachment.name}](${attachment.url})`
+      : attachment.type === 'voice'
+      ? `[🎤 Voice note (${attachment.duration || '0:03'})]`
+      : `[📎 ${attachment.name}](${attachment.url || ''})`;
+    await sendMessage(text);
+  }
+
+  const displayMessages = starredOnly
+    ? messages.filter(m => activeConv && isStarred(activeConv.id, getMessageKey(m)))
+    : messages;
+
+  const filteredDisplay = showSearch && searchQuery
+    ? searchResults
+    : displayMessages;
 
   return (
     <div className="flex flex-col h-[calc(100vh-9rem)]">
@@ -186,86 +265,147 @@ export default function MemberAdvisorChat() {
           activeConv={activeConv}
           onSelectConv={(conv) => { setActiveConv(conv); setMessages(conv.messages || []); }}
           onDeleteConv={deleteConversation}
-          onToggleStarred={() => setStarredOnly(!starredOnly)}
+          onNewConv={startNewConversation}
+          onToggleStarred={() => { setStarredOnly(s => !s); setStarredVersion(v => v + 1); }}
+          onToggleSearch={() => { setShowSearch(s => !s); setSearchQuery(''); setSearchResults([]); }}
           starredOnly={starredOnly}
+          showSearch={showSearch}
         />
 
+        {/* Search Bar */}
+        <AnimatePresence>
+          {showSearch && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-b border-slate-200 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50">
+                <Search size={15} className="text-gray flex-shrink-0" />
+                <input
+                  ref={searchRef}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search messages…"
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-gray/50 focus:outline-none"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="text-gray hover:text-foreground">
+                    <X size={14} />
+                  </button>
+                )}
+                {searchResults.length > 0 && (
+                  <span className="text-gray text-xs">{searchResults.length} found</span>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto vantoris-scroll px-3 py-3 bg-slate-50/40">
-          {loadingConv && (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 size={20} className="animate-spin text-navy" />
-            </div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-0 bg-slate-50/30">
+          {activeTab === 'advisor' && (
+            <>
+              {loadingConv ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-brass/30 border-t-brass rounded-full animate-spin" />
+                    <p className="text-gray text-xs">Loading conversations…</p>
+                  </div>
+                </div>
+              ) : filteredDisplay.length === 0 && !loading ? (
+                <AdvisorEmptyState
+                  showSearch={showSearch && !!searchQuery}
+                  onSuggest={sendMessage}
+                />
+              ) : (
+                <>
+                  {showSearch && searchQuery ? (
+                    // Search results
+                    <div className="space-y-2">
+                      {searchResults.map((msg, idx) => (
+                        <div key={idx} className="bg-white border border-slate-200 rounded-xl p-3">
+                          <p className="text-[10px] text-gray mb-1 uppercase tracking-wider">{msg.convName || 'Conversation'}</p>
+                          <p className="text-foreground text-sm">
+                            {highlightSearch(msg.content || '', searchQuery)}
+                          </p>
+                          <p className="text-gray text-[10px] mt-1">
+                            {msg.created_date ? new Date(msg.created_date).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    filteredDisplay.map((msg, idx) => {
+                      const isUser = msg.role === 'user';
+                      const nextMsg = filteredDisplay[idx + 1];
+                      const isLastInGroup = !nextMsg || nextMsg.role !== msg.role;
+                      const showAvatar = isLastInGroup;
+                      const showDateSep = shouldShowDateSeparator(filteredDisplay, idx);
+
+                      // Check if message is an attachment link
+                      const attachmentMatch = (msg.content || '').match(/^\[(📷|📎|🎤)[^\]]+\]\(([^)]*)\)$/);
+
+                      return (
+                        <React.Fragment key={idx}>
+                          {showDateSep && <DateSeparator label={formatDateGroup(msg.created_date || msg.timestamp)} />}
+                          {attachmentMatch ? (
+                            <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-1`}>
+                              <AttachmentBubble
+                                attachment={{
+                                  type: msg.content.startsWith('[📷') ? 'image' : msg.content.startsWith('[🎤') ? 'voice' : 'document',
+                                  name: msg.content.match(/\[.+?: (.+?)\]/)?.[1] || 'Attachment',
+                                  url: attachmentMatch[2],
+                                }}
+                                isUser={isUser}
+                              />
+                            </div>
+                          ) : (
+                            <ChatMessage
+                              message={msg}
+                              isUser={isUser}
+                              showAvatar={showAvatar}
+                              isLastInGroup={isLastInGroup}
+                              convId={activeConv?.id}
+                              onStarToggle={() => setStarredVersion(v => v + 1)}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                  {loading && (
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="w-7 h-7 rounded-full bg-navy/8 flex items-center justify-center flex-shrink-0 self-end">
+                        <VantorisMonogram size={18} variant="flat" theme="light" />
+                      </div>
+                      <div className="vantoris-chat-bubble-in rounded-2xl rounded-bl-md">
+                        <TypingIndicator />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
           )}
 
-          {activeTab === 'advisor' && messages.length === 0 && !loadingConv && !starredOnly && (
-            <EmptyAdvisorState onSuggestion={sendMessage} />
-          )}
-
-          {activeTab === 'advisor' && starredOnly && messages.length > 0 && !loadingConv &&
-            messages.filter(msg => activeConv && isStarred(activeConv.id, getMessageKey(msg))).length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Star size={32} className="text-gray/40 mb-2" />
-              <p className="text-gray text-sm">No starred messages</p>
-              <p className="text-gray/60 text-xs mt-1">Star important messages to find them here</p>
-            </div>
-          )}
-
-          {activeTab === 'support' && !loadingConv && (
-            <SupportChannel whatsappNumber={whatsappNumber} />
-          )}
-
-          {activeTab === 'manager' && !loadingConv && (
-            <ManagerChannel />
-          )}
-
-          {activeTab === 'advisor' && (() => {
-            const displayed = starredOnly && activeConv
-              ? messages.filter(msg => isStarred(activeConv.id, getMessageKey(msg)))
-              : messages;
-            return displayed.map((msg, idx) => {
-              const isUser = msg.role === 'user';
-              const prevMsg = displayed[idx - 1];
-              const nextMsg = displayed[idx + 1];
-              const showDateSep = shouldShowDateSeparator(displayed, idx);
-              const showAvatar = !nextMsg || nextMsg.role !== msg.role;
-              const isLastInGroup = !nextMsg || nextMsg.role !== msg.role;
-              return (
-                <React.Fragment key={idx}>
-                  {showDateSep && <DateSeparator label={formatDateGroup(msg.created_date)} />}
-                  <ChatMessage
-                    message={msg}
-                    isUser={isUser}
-                    showAvatar={showAvatar}
-                    isLastInGroup={isLastInGroup}
-                    convId={activeConv?.id}
-                    onStarToggle={() => setStarredVersion(v => v + 1)}
-                  />
-                </React.Fragment>
-              );
-            });
-          })()}
-
-          {loading && activeTab === 'advisor' && (
-            <div className="flex items-start gap-2 mb-3">
-              <div className="w-7 h-7 rounded-full bg-navy/8 flex items-center justify-center flex-shrink-0 self-end">
-                <VantorisMonogram size={18} variant="flat" theme="light" />
-              </div>
-              <div className="vantoris-chat-bubble-in rounded-2xl rounded-bl-md">
-                <TypingIndicator />
-              </div>
-            </div>
-          )}
+          {activeTab === 'support' && <SupportChannel whatsappNumber={whatsappNumber} />}
+          {activeTab === 'manager' && <ManagerChannel />}
 
           <div ref={messagesEndRef} />
         </div>
 
         {/* Banking Quick Actions */}
-        {activeTab === 'advisor' && <BankingCards />}
+        {activeTab === 'advisor' && !showSearch && <BankingCards />}
 
         {/* Input Bar */}
         {activeTab === 'advisor' && (
-          <ChatInputBar onSend={sendMessage} disabled={loading} />
+          <ChatInputBar
+            onSend={sendMessage}
+            onAttach={sendAttachment}
+            disabled={loading}
+          />
         )}
         {activeTab !== 'advisor' && (
           <ChannelInputBar activeTab={activeTab} whatsappNumber={whatsappNumber} />
@@ -275,18 +415,151 @@ export default function MemberAdvisorChat() {
   );
 }
 
-function ChatHeader({ activeTab, whatsappNumber, conversations, activeConv, onSelectConv, onDeleteConv, onToggleStarred, starredOnly }) {
+// ── Highlight search terms ──
+function highlightSearch(text, query) {
+  if (!query) return text;
+  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+  return parts.map((part, i) =>
+    part.toLowerCase() === query.toLowerCase()
+      ? <mark key={i} className="bg-brass/20 text-foreground rounded px-0.5">{part}</mark>
+      : part
+  );
+}
+
+// ── Empty State ──
+function AdvisorEmptyState({ showSearch, onSuggest }) {
+  if (showSearch) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center py-8">
+        <Search size={28} className="text-gray/30 mb-3" />
+        <p className="text-foreground font-medium text-sm">No messages found</p>
+        <p className="text-gray text-xs mt-1">Try a different search term</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center py-6">
+      <div className="w-14 h-14 rounded-2xl bg-navy/8 flex items-center justify-center mb-4">
+        <VantorisMonogram size={32} variant="flat" theme="light" />
+      </div>
+      <h3 className="text-foreground font-semibold text-base mb-1">Vantoris Advisor</h3>
+      <p className="text-gray text-xs max-w-[220px] mb-5">Your AI financial guide. Ask me anything about your accounts, transactions, or services.</p>
+      <div className="space-y-2 w-full max-w-xs">
+        {SUGGESTIONS.map((s, i) => (
+          <button
+            key={i}
+            onClick={() => onSuggest(s)}
+            className="w-full text-left px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-foreground hover:border-brass/30 hover:bg-brass/5 transition-all"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Support Channel ──
+function SupportChannel({ whatsappNumber }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center py-8 px-4">
+      <div className="w-14 h-14 rounded-2xl bg-mint/10 flex items-center justify-center mb-4">
+        <MessageCircle size={26} className="text-mint" />
+      </div>
+      <h3 className="text-foreground font-semibold text-base mb-1">Human Support</h3>
+      <p className="text-gray text-sm max-w-[240px] mb-2">
+        Connect with a live support agent via WhatsApp for immediate assistance.
+      </p>
+      <p className="text-gray text-xs max-w-[240px] mb-6">
+        Available Monday–Friday, 9 AM – 6 PM EST. For urgent matters, call your relationship manager.
+      </p>
+      <div className="space-y-2 w-full max-w-xs">
+        {[
+          { label: 'Account inquiry', msg: 'Hello Vantoris Support, I have a question about my account.' },
+          { label: 'Transaction dispute', msg: 'Hello Vantoris Support, I need to report a transaction dispute.' },
+          { label: 'Document request', msg: 'Hello Vantoris Support, I need to request a document.' },
+          { label: 'General inquiry', msg: 'Hello Vantoris Support, I have a general inquiry.' },
+        ].map(item => (
+          <a
+            key={item.label}
+            href={whatsappNumber
+              ? `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(item.msg)}`
+              : '#'
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-foreground hover:border-mint/40 hover:bg-mint/5 transition-all ${!whatsappNumber ? 'opacity-40 pointer-events-none' : ''}`}
+          >
+            <MessageCircle size={14} className="text-mint flex-shrink-0" />
+            {item.label}
+            <ChevronRight size={14} className="text-gray/40 ml-auto" />
+          </a>
+        ))}
+      </div>
+      {!whatsappNumber && (
+        <p className="text-gray text-xs mt-4">WhatsApp support is not configured yet. Contact your relationship manager.</p>
+      )}
+    </div>
+  );
+}
+
+// ── Manager Channel ──
+function ManagerChannel() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center py-8 px-4">
+      <div className="w-14 h-14 rounded-2xl bg-brass/10 flex items-center justify-center mb-4">
+        <Shield size={26} className="text-brass" />
+      </div>
+      <h3 className="text-foreground font-semibold text-base mb-1">Relationship Manager</h3>
+      <p className="text-gray text-sm max-w-[240px] mb-6">
+        Your dedicated Vantoris relationship manager is here to provide personalized guidance and support.
+      </p>
+      <div className="vantoris-glass-premium p-4 mb-5 w-full max-w-xs text-left">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-brass/15 flex items-center justify-center">
+            <span className="text-brass font-bold text-sm">VM</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Vantoris Private</p>
+            <p className="text-xs text-gray">Wealth Management · Dedicated RM</p>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2 w-full max-w-xs">
+        <button
+          onClick={() => navigate('/advisor')}
+          className="w-full py-2.5 bg-brass text-white font-semibold rounded-xl text-sm hover:bg-brass/90 transition flex items-center justify-center gap-2"
+        >
+          <Calendar size={15} />
+          Schedule Appointment
+        </button>
+        <button
+          onClick={() => navigate('/services')}
+          className="w-full py-2.5 bg-slate-100 text-foreground font-medium rounded-xl text-sm hover:bg-slate-200 transition"
+        >
+          View Premium Services
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Chat Header ──
+function ChatHeader({ activeTab, whatsappNumber, conversations, activeConv, onSelectConv, onDeleteConv, onNewConv, onToggleStarred, onToggleSearch, starredOnly, showSearch }) {
   const [showHistory, setShowHistory] = useState(false);
   const config = {
     advisor: { name: 'Vantoris Advisor', status: 'Online · AI Financial Guide', online: true },
-    support: { name: 'Human Support', status: whatsappNumber ? `WhatsApp · ${whatsappNumber}` : 'Available via WhatsApp', online: true },
+    support: { name: 'Human Support', status: whatsappNumber ? 'WhatsApp · Available' : 'Contact via WhatsApp', online: !!whatsappNumber },
     manager: { name: 'Relationship Manager', status: 'Your dedicated RM', online: true },
   };
   const info = config[activeTab];
 
   return (
     <div className="flex items-center gap-3 p-3.5 border-b border-slate-200 vantoris-glass-header">
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         <div className="w-10 h-10 rounded-full bg-navy/8 flex items-center justify-center">
           <VantorisMonogram size={24} variant="flat" theme="light" />
         </div>
@@ -296,179 +569,108 @@ function ChatHeader({ activeTab, whatsappNumber, conversations, activeConv, onSe
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-sm text-foreground truncate">{info.name}</h3>
-        <p className="text-gray text-xs truncate flex items-center gap-1">
-          {info.status}
-        </p>
+        <p className="text-gray text-xs truncate">{info.status}</p>
       </div>
       {activeTab === 'advisor' && (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={onToggleSearch}
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${showSearch ? 'bg-brass text-white' : 'bg-slate-100 text-gray hover:bg-slate-200'}`}
+            title="Search messages"
+          >
+            <Search size={15} />
+          </button>
           <button
             onClick={onToggleStarred}
-            className={`p-2 rounded-lg transition-all ${starredOnly ? 'bg-gold/15 text-gold' : 'text-gray hover:bg-slate-100 hover:text-foreground'}`}
-            title="Show starred messages only"
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${starredOnly ? 'bg-gold/20 text-gold' : 'bg-slate-100 text-gray hover:bg-slate-200'}`}
+            title={starredOnly ? 'Show all messages' : 'Show starred only'}
           >
-            <Star size={16} fill={starredOnly ? 'currentColor' : 'none'} />
+            <Star size={15} fill={starredOnly ? 'currentColor' : 'none'} />
           </button>
-          <div className="relative">
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="p-2 rounded-lg text-gray hover:bg-slate-100 hover:text-foreground transition-all"
-              title="Conversation history"
-            >
-              <Clock size={16} />
-            </button>
-            {showHistory && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowHistory(false)} />
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto vantoris-scroll">
-                  {conversations.length === 0 ? (
-                    <p className="p-4 text-center text-gray text-sm">No conversations</p>
-                  ) : conversations.map(conv => (
-                    <div key={conv.id} className={`flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50 transition-all border-b border-slate-100 last:border-0 ${activeConv?.id === conv.id ? 'bg-navy/5' : ''}`}>
-                      <button
-                        onClick={() => { onSelectConv(conv); setShowHistory(false); }}
-                        className="flex-1 text-left min-w-0"
-                      >
-                        <p className="text-sm font-medium text-foreground truncate">{conv.metadata?.name || 'Conversation'}</p>
-                        <p className="text-xs text-gray truncate">{conv.messages?.[conv.messages.length - 1]?.content?.slice(0, 50) || 'No messages'}</p>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteConv(conv.id); }}
-                        className="p-1.5 rounded-lg text-gray hover:bg-crimson/10 hover:text-crimson transition-all flex-shrink-0"
-                        title="Delete conversation"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-      <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-navy/5">
-        <Shield size={12} className="text-navy" />
-        <span className="text-navy text-[9px] font-semibold uppercase tracking-wider">Encrypted</span>
-      </div>
-    </div>
-  );
-}
-
-function EmptyAdvisorState({ onSuggestion }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-16 h-16 rounded-2xl bg-navy/8 flex items-center justify-center mb-4"
-      >
-        <Sparkles size={28} className="text-navy" />
-      </motion.div>
-      <h4 className="font-semibold text-foreground mb-1">How can I help you today?</h4>
-      <p className="text-gray text-sm max-w-xs mb-5">
-        Ask me about your accounts, transactions, onboarding status, or available services.
-      </p>
-      <div className="space-y-2 w-full max-w-sm">
-        {SUGGESTIONS.map((suggestion, idx) => (
-          <motion.button
-            key={suggestion}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.08 }}
-            onClick={() => onSuggestion(suggestion)}
-            className="flex items-center justify-between w-full text-left px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-navy/20 hover:bg-navy/3 text-foreground text-xs font-medium transition-all"
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all relative ${showHistory ? 'bg-navy text-white' : 'bg-slate-100 text-gray hover:bg-slate-200'}`}
+            title="Conversations"
           >
-            {suggestion}
-            <ChevronRight size={14} className="text-gray/40" />
-          </motion.button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SupportChannel({ whatsappNumber }) {
-  const waLink = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}` : '#';
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-      <div className="w-16 h-16 rounded-2xl bg-mint/10 flex items-center justify-center mb-4">
-        <MessageCircle size={28} className="text-mint" />
-      </div>
-      <h4 className="font-semibold text-foreground mb-1">Human Support via WhatsApp</h4>
-      <p className="text-gray text-sm max-w-xs mb-6">
-        Connect with our support team directly through WhatsApp Business. Your conversation stays private and secure.
-      </p>
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 w-full max-w-xs space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-mint/10 flex items-center justify-center">
-            <Phone size={16} className="text-mint" />
-          </div>
-          <div>
-            <p className="text-xs text-gray">WhatsApp Number</p>
-            <p className="text-sm font-semibold text-foreground">{whatsappNumber || 'Not configured'}</p>
-          </div>
+            <Clock size={15} />
+            {conversations.length > 0 && !showHistory && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-brass text-white rounded-full text-[8px] flex items-center justify-center font-bold">
+                {Math.min(conversations.length, 9)}
+              </span>
+            )}
+          </button>
+          {showHistory && (
+            <ConversationHistory
+              conversations={conversations}
+              activeConv={activeConv}
+              onSelect={(conv) => { onSelectConv(conv); setShowHistory(false); }}
+              onDelete={onDeleteConv}
+              onNew={() => { onNewConv(); setShowHistory(false); }}
+              onClose={() => setShowHistory(false)}
+            />
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-navy/8 flex items-center justify-center">
-            <Mail size={16} className="text-navy" />
-          </div>
-          <div>
-            <p className="text-xs text-gray">Hours</p>
-            <p className="text-sm font-semibold text-foreground">Mon–Fri, 8AM–8PM ET</p>
-          </div>
-        </div>
-      </div>
-      {whatsappNumber && (
-        <a
-          href={waLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 w-full max-w-xs py-3 bg-mint text-white font-semibold rounded-xl text-sm hover:bg-mint/90 transition flex items-center justify-center gap-2"
-        >
-          <MessageCircle size={16} />
-          Continue on WhatsApp
-        </a>
       )}
     </div>
   );
 }
 
-function ManagerChannel() {
-  const navigate = useNavigate();
+// ── Conversation History Dropdown ──
+function ConversationHistory({ conversations, activeConv, onSelect, onDelete, onNew, onClose }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-      <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mb-4">
-        <Calendar size={28} className="text-gold" />
-      </div>
-      <h4 className="font-semibold text-foreground mb-1">Your Relationship Manager</h4>
-      <p className="text-gray text-sm max-w-xs mb-6">
-        Schedule a private consultation with your dedicated relationship manager for personalized wealth management guidance.
-      </p>
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 w-full max-w-xs space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-navy/8 flex items-center justify-center">
-            <VantorisMonogram size={22} variant="flat" theme="light" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-foreground">Assigned RM</p>
-            <p className="text-xs text-gray">Vantoris Wealth Management</p>
-          </div>
+    <div className="absolute top-14 right-3 z-30 w-72 vantoris-glass-dropdown rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200">
+        <h4 className="text-foreground font-semibold text-sm">Conversations</h4>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onNew}
+            className="flex items-center gap-1 px-2.5 py-1 bg-brass/10 text-brass rounded-lg text-[11px] font-semibold hover:bg-brass/20 transition"
+          >
+            <Plus size={11} /> New
+          </button>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-gray hover:bg-slate-200 transition">
+            <X size={13} />
+          </button>
         </div>
       </div>
-      <button
-        onClick={() => navigate('/advisor')}
-        className="mt-5 w-full max-w-xs py-3 bg-navy text-white font-semibold rounded-xl text-sm hover:bg-navy/90 transition flex items-center justify-center gap-2"
-      >
-        <Calendar size={16} />
-        Schedule Appointment
-      </button>
+      <div className="max-h-64 overflow-y-auto">
+        {conversations.length === 0 ? (
+          <div className="py-6 text-center">
+            <p className="text-gray text-xs">No conversations yet</p>
+          </div>
+        ) : (
+          conversations.map(conv => (
+            <div
+              key={conv.id}
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer transition-all hover:bg-slate-50 ${activeConv?.id === conv.id ? 'bg-brass/5 border-l-2 border-brass' : ''}`}
+              onClick={() => onSelect(conv)}
+            >
+              <div className="w-8 h-8 rounded-xl bg-navy/8 flex items-center justify-center flex-shrink-0">
+                <VantorisMonogram size={18} variant="flat" theme="light" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground text-xs font-semibold truncate">
+                  {conv.metadata?.name || 'Conversation'}
+                </p>
+                <p className="text-gray text-[10px]">
+                  {conv.messages?.length || 0} messages
+                </p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
+                className="w-6 h-6 flex items-center justify-center rounded-full text-gray hover:text-crimson hover:bg-crimson/10 transition opacity-0 group-hover:opacity-100"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
+// ── Channel Input Bar ──
 function ChannelInputBar({ activeTab, whatsappNumber }) {
   const navigate = useNavigate();
 
@@ -488,15 +690,25 @@ function ChannelInputBar({ activeTab, whatsappNumber }) {
       </div>
     );
   }
+  if (activeTab === 'support' && !whatsappNumber) {
+    return (
+      <div className="p-3 border-t border-slate-200 bg-white safe-bottom">
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <AlertCircle size={15} className="text-amber-500 flex-shrink-0" />
+          <p className="text-amber-700 text-xs">WhatsApp support is not configured. Contact your relationship manager.</p>
+        </div>
+      </div>
+    );
+  }
   if (activeTab === 'manager') {
     return (
       <div className="p-3 border-t border-slate-200 bg-white safe-bottom">
         <button
-          onClick={() => navigate('/advisor')}
+          onClick={() => navigate('/services')}
           className="w-full h-11 bg-navy text-white font-semibold rounded-xl text-sm hover:bg-navy/90 transition flex items-center justify-center gap-2"
         >
           <Calendar size={16} />
-          Book Appointment
+          Schedule Appointment
         </button>
       </div>
     );

@@ -1,0 +1,381 @@
+Continue transforming VANTORIS into a complete premium institutional banking platform.
+
+Do not create mockups.
+Do not create placeholders.
+Implement production-ready functionality wherever backend support already exists.
+Hide features that truly cannot function until backend support exists.
+
+====================================================
+PREMIUM MEMBER PROFILE
+====================================================
+
+Redesign the entire Profile section.
+
+Take inspiration from premium banking apps such as:
+
+• Bank of America
+• Chase
+• Chime
+• Discover
+• Capital One
+
+without copying their designs.
+
+The profile should feel elegant, organized and executive.
+
+Sections should include:
+
+MEMBER
+
+• Profile photo
+• Full legal name
+• Preferred name
+• Member ID
+• Membership tier
+• Verification status
+• Joined date
+• Primary relationship manager (if assigned)
+
+PERSONAL INFORMATION
+
+• First Name
+• Middle Name
+• Last Name
+• Preferred Name
+• Date of Birth
+• Nationality
+• Phone
+• Email
+• Address
+• Mailing Address
+
+IDENTIFICATION
+
+• Government IDs
+• Passport
+• Driver License
+• Verification status
+• Expiration dates
+
+SECURITY
+
+• Password
+• PIN
+• Face ID
+• Trusted Devices
+• Sessions
+• Login History
+• Recovery Methods
+
+BANKING
+
+• Personal Accounts
+• Joint Accounts (only if member owns one)
+• Business Accounts (only if member owns one)
+• Organization Accounts (only if member owns one)
+
+CARDS
+
+Display every active card beautifully.
+
+Each card should support:
+
+View card
+
+Freeze
+
+Unfreeze
+
+Lock
+
+Unlock
+
+Replace card
+
+Report lost
+
+Reveal card number (after authentication)
+
+View CVV securely
+
+Copy card number securely
+
+View expiry
+
+Rename card
+
+Card spending controls
+
+ATM controls
+
+Online purchases
+
+International purchases
+
+Contactless toggle
+
+Apple Wallet
+
+Google Wallet
+
+View transactions
+
+Card statements
+
+Card PIN management
+
+Request replacement
+
+Request new physical card
+
+Request new virtual card
+
+====================================================
+CARD ISSUANCE
+====================================================
+
+Allow members to request and issue:
+
+Personal Debit Card
+
+Joint Debit Card
+
+Business Debit Card
+
+Organization Debit Card
+
+Virtual Cards
+
+Premium Cards
+
+Metal Cards (if available)
+
+Card request workflow:
+
+Choose account
+
+Choose delivery address
+
+Choose card design
+
+Choose name printed
+
+Review
+
+Submit
+
+Status tracking
+
+Shipping tracking
+
+Activation
+
+====================================================
+ACCOUNT VISIBILITY
+====================================================
+
+Never show products the member does not own.
+
+If member owns:
+
+1 account
+
+show one.
+
+If member owns:
+
+2 accounts
+
+show exactly two.
+
+No empty placeholders.
+
+====================================================
+INVESTMENTS
+====================================================
+
+Investments should behave exactly like Accounts.
+
+Each investment account should support:
+
+Overview
+
+Performance
+
+Transactions
+
+Statements
+
+Funding
+
+Withdrawals
+
+Trade History
+
+Orders
+
+Portfolio Allocation
+
+Documents
+
+Tax Documents
+
+Activity Timeline
+
+====================================================
+STATEMENTS
+====================================================
+
+Generated PDFs must include:
+
+VANTORIS branding
+
+Full legal name
+
+Preferred name if applicable
+
+Account number
+
+Statement period
+
+Opening balance
+
+Closing balance
+
+Every transaction
+
+Running balance
+
+Debit
+
+Credit
+
+Fees
+
+Interest
+
+Transfers
+
+Investment transactions
+
+Card purchases
+
+Card refunds
+
+ATM withdrawals
+
+Deposits
+
+Wire transfers
+
+References
+
+Descriptions
+
+Date
+
+Time
+
+Pending section
+
+Completed section
+
+Professional pagination
+
+Summary page
+
+====================================================
+MEMBER ADVISOR
+====================================================
+
+Support should exist inside Member Advisor.
+
+Allow:
+
+Text
+
+Images
+
+Documents
+
+PDF
+
+Camera
+
+Voice notes
+
+Typing indicator
+
+Read receipts
+
+Message reactions
+
+Search messages
+
+Attachments
+
+Download attachments
+
+AI assistance
+
+Human advisor escalation
+
+====================================================
+DASHBOARD
+====================================================
+
+Use the member's Full Name or Preferred Name.
+
+Never display:
+
+username
+
+email
+
+userId
+
+====================================================
+REMOVE
+====================================================
+
+Remove:
+
+Coming Soon
+
+Duplicate pages
+
+Duplicate buttons
+
+Duplicate menus
+
+Unused routes
+
+Dead buttons
+
+Placeholder cards
+
+Empty account sections
+
+====================================================
+FINAL REQUIREMENT
+====================================================
+
+Audit the entire application.
+
+Finish every incomplete member workflow.
+
+Every visible button must either:
+
+perform a real action,
+
+or be hidden until backend support exists.
+
+Return a report listing:
+
+Files modified
+
+Workflows completed
+
+Duplicate components removed
+
+Remaining backend dependencies.

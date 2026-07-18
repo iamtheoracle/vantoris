@@ -1,3 +1,9 @@
 - [Member name display](member-name.md) — use `getMemberDisplayName(user)` from `src/lib/memberName.js`; never display email/username as a member name
 - [MoveMoney architecture](move-money.md) — real workflows (ACH/Wire/Send/Request/DepositCheck) wired to WithdrawalRequest + Transaction entities; QR/Crypto/Currency/Scheduled/Recurring removed (no backend)
 - [Admin AI Dev Mode](admin-ai-mode.md) — route `/operations/ai-dev-mode` (AdminAIMode.jsx); role-gated to admin/developer/executive/ops; all actions require human approval; audited via logAuditEntry
+- [Profile redesign](profile-redesign.md) — Profile.jsx fully rewritten with 6 sections; Card entity queried via `base44.entities.Card?.filter().catch(()=>[])` (optional chaining safe if entity missing)
+- [Investment account detail](investment-detail.md) — Investments.jsx InvestmentAccountDetail sub-page triggered by account tap; 7 sub-tabs; funding/withdrawal via WithdrawalRequest
+- [Ops Cards page](ops-cards.md) — operations/Cards.jsx loads real Card entities, freeze/lock/report-lost with audit logging, Issue Card dialog creates Card entity + Notification
+- [ChatInputBar file attach](chat-attach.md) — hidden file inputs + base44.integrations.Core.UploadFile; onAttach callback {type,name,url,size,mime}; voice simulates 3s then fires onAttach
+- [MemberAdvisorChat search](advisor-search.md) — full message search across all conversation messages; results highlighted; search bar slides in/out with AnimatePresence
+- [Statement PDF columns](statement-pdf.md) — AccountDetail.jsx PDF has DATE/TIME, DESCRIPTION, REF, DEBIT, CREDIT, BALANCE columns with running balance per row and per-page header repeat

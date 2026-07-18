@@ -36,6 +36,10 @@ export default function Accounts() {
     ? accounts
     : accounts.filter(a => a.account_type === activeFilter);
 
+  // Only show filter tabs for account types the member actually owns
+  const ownedTypes = ['All', ...Array.from(new Set(accounts.map(a => a.account_type).filter(Boolean)))];
+  const visibleTabs = ACCOUNT_TYPES.filter(t => ownedTypes.includes(t));
+
   return (
     <div className="px-5 pt-6">
       <div className="mb-6">
@@ -43,9 +47,9 @@ export default function Accounts() {
         <p className="text-gray text-sm">Total Balance: <span className="text-foreground font-semibold">{formatCurrency(totalBalance)}</span></p>
       </div>
 
-      {/* Filter tabs — functional */}
+      {/* Filter tabs — only show types the member actually owns */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-        {ACCOUNT_TYPES.map(tab => (
+        {visibleTabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveFilter(tab)}

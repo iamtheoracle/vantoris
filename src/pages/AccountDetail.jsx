@@ -349,41 +349,86 @@ export default function AccountDetail() {
       doc.setTextColor(170, 180, 195);
       doc.setFontSize(7);
       doc.setFont(undefined, 'bold');
-      doc.text('DATE', 22, y);
-      doc.text('DESCRIPTION', 50, y);
-      doc.text('REFERENCE', 100, y);
-      doc.text('DEBIT', 140, y);
-      doc.text('CREDIT', 165, y);
+      doc.text('DATE / TIME', 22, y);
+      doc.text('DESCRIPTION', 55, y);
+      doc.text('REF', 100, y);
+      doc.text('DEBIT', 130, y);
+      doc.text('CREDIT', 153, y);
+      doc.text('BALANCE', 173, y);
       y += 8;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(8);
+      let runningBalance = openingBalance;
       filtered.forEach(txn => {
-        if (y > 275) {
+        if (y > 272) {
+          // Page footer
+          doc.setTextColor(176, 141, 87);
+          doc.setFontSize(7);
+          doc.text('SECURE. TRUSTED. TAILORED FOR YOU.', 20, 287);
+          doc.setTextColor(170, 180, 195);
+          doc.text('VANTORIS — Elevating Your Financial World.', 20, 292);
+          doc.text(`Page ${doc.getCurrentPageInfo().pageNumber} of —`, 170, 292);
+          doc.text(referenceNumber, 90, 292);
+
           doc.addPage();
           doc.setFillColor(14, 26, 43);
           doc.rect(0, 0, 210, 297, 'F');
           y = 20;
+
+          // Repeat header on new page
+          doc.setFillColor(36, 45, 56);
+          doc.rect(20, y - 5, 170, 8, 'F');
+          doc.setTextColor(170, 180, 195);
+          doc.setFontSize(7);
+          doc.setFont(undefined, 'bold');
+          doc.text('DATE / TIME', 22, y);
+          doc.text('DESCRIPTION', 55, y);
+          doc.text('REF', 100, y);
+          doc.text('DEBIT', 130, y);
+          doc.text('CREDIT', 153, y);
+          doc.text('BALANCE', 173, y);
+          y += 8;
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(8);
         }
+
+        runningBalance += (txn.amount || 0);
         const txnDate = new Date(txn.transaction_date || txn.created_date);
+        const dateStr = txnDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: '2-digit' });
+        const timeStr = txnDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
         doc.setTextColor(170, 180, 195);
-        doc.text(txnDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }), 22, y);
+        doc.setFontSize(7);
+        doc.text(dateStr, 22, y);
+        doc.text(timeStr, 22, y + 4);
+        doc.setFontSize(8);
         doc.setTextColor(255, 255, 255);
-        doc.text((txn.description || txn.type).substring(0, 25), 50, y);
+        doc.text((txn.description || txn.type).substring(0, 22), 55, y);
+        doc.setFontSize(7);
         doc.setTextColor(170, 180, 195);
-        doc.text((txn.reference || '-').substring(0, 18), 100, y);
-        if (txn.amount < 0) {
-          doc.setTextColor(140, 47, 57);
-          doc.text(formatCurrency(Math.abs(txn.amount)), 140, y);
-          doc.text('-', 168, y);
+        doc.text((txn.reference || '-').substring(0, 14), 100, y);
+        if ((txn.amount || 0) < 0) {
+          doc.setTextColor(180, 60, 70);
+          doc.text(formatCurrency(Math.abs(txn.amount || 0)), 130, y);
+          doc.setTextColor(170, 180, 195);
+          doc.text('-', 156, y);
         } else {
-          doc.text('-', 143, y);
-          doc.setTextColor(62, 76, 58);
-          doc.text(formatCurrency(Math.abs(txn.amount)), 165, y);
+          doc.setTextColor(170, 180, 195);
+          doc.text('-', 133, y);
+          doc.setTextColor(70, 160, 90);
+          doc.text(formatCurrency(Math.abs(txn.amount || 0)), 153, y);
+        }
+        // Running balance
+        doc.setTextColor(txn.status === 'pending' ? 176 : 255, txn.status === 'pending' ? 141 : 255, txn.status === 'pending' ? 87 : 255);
+        doc.setFontSize(7);
+        doc.text(formatCurrency(runningBalance), 173, y);
+        if (txn.status === 'pending') {
+          doc.text('PENDING', 173, y + 4);
         }
         doc.setDrawColor(36, 45, 56);
-        doc.line(20, y + 2, 190, y + 2);
-        y += 7;
+        doc.line(20, y + 7, 190, y + 7);
+        y += 9;
       });
 
       const pageCount = doc.getNumberOfPages();
