@@ -37,7 +37,7 @@ const MemberAdvisor = React.lazy(() => import('./pages/MemberAdvisor'));
 const Trading = React.lazy(() => import('./pages/Trading'));
 const MoveMoney = React.lazy(() => import('./pages/MoveMoney'));
 const Investments = React.lazy(() => import('./pages/Investments'));
-const More = React.lazy(() => import('./pages/More'));
+// More is absorbed into Profile — redirect handled in routes
 const TransactionDispute = React.lazy(() => import('./pages/TransactionDispute'));
 const BrandIdentity = React.lazy(() => import('./pages/BrandIdentity'));
 
@@ -131,7 +131,7 @@ const AuthenticatedApp = () => {
               <Route path="/trading" element={<Trading />} />
               <Route path="/move-money" element={<MoveMoney />} />
               <Route path="/investments" element={<Investments />} />
-              <Route path="/more" element={<More />} />
+              <Route path="/more" element={<Navigate to="/profile" replace />} />
               <Route path="/transaction-dispute" element={<TransactionDispute />} />
               <Route path="/guide" element={<MemberAdvisor />} />
             </Route>

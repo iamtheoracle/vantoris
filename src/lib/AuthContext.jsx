@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, isOfflineMode } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { seedResponseTemplates } from '@/lib/seedResponseTemplates';
 
 const AuthContext = createContext();
@@ -20,12 +19,22 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // The app is fully usable without a hosted Base44 subscription. In that
+    // case the resilient client supplies a local member and local entities.
+    if (isOfflineMode) {
+      setAppPublicSettings({ offline: true });
+      setIsLoadingPublicSettings(false);
+      await checkUserAuth();
+      return;
+    }
+
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
       
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
+      const { createAxiosClient } = await import('@base44/sdk/dist/utils/axios-client');
       const appClient = createAxiosClient({
         baseURL: `/api/apps/public`,
         headers: {
@@ -50,43 +59,19 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
       } catch (appError) {
         console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
+
+        // A hosted service outage should not blank the application. The
+        // resilient data/agent adapters can continue locally.
+        setAppPublicSettings({ offline: true, remoteError: appError.message });
+        await checkUserAuth();
         setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
+        return;
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
+      setAppPublicSettings({ offline: true, remoteError: error.message });
       setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
+      await checkUserAuth();
     }
   };
 

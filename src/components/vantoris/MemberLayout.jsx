@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import PageTransition from './PageTransition';
 import BottomNav from './BottomNav';
-import FloatingCommandDock from './FloatingCommandDock';
+import FloatingActionButton from './FloatingActionButton';
 import SessionTimeoutModal from './SessionTimeoutModal';
 
 export default function MemberLayout() {
@@ -18,12 +18,15 @@ export default function MemberLayout() {
 
   return (
     <TabHistoryProvider>
-      <div className="min-h-screen bg-background vantoris-scroll" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
+      <div
+        className="min-h-screen bg-background vantoris-scroll"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+      >
         <div className="safe-top">
           <PageTransition />
         </div>
         <BottomNav />
-        <FloatingCommandDock />
+        <FloatingActionButton />
         <SessionTimeoutModal
           show={showWarning}
           onExtend={extendSession}

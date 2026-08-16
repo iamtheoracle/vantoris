@@ -1,15 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Wallet, ArrowLeftRight, TrendingUp, LayoutGrid } from 'lucide-react';
+import { Home, Wallet, ArrowLeftRight, User } from 'lucide-react';
 import { TabHistoryContext } from '@/lib/TabHistoryContext';
 import { useContext } from 'react';
 
 const navItems = [
-  { label: 'Home', path: '/', icon: Home },
-  { label: 'Accounts', path: '/accounts', icon: Wallet },
+  { label: 'Home',       path: '/',           icon: Home },
+  { label: 'Accounts',   path: '/accounts',   icon: Wallet },
   { label: 'Move Money', path: '/move-money', icon: ArrowLeftRight },
-  { label: 'Investments', path: '/investments', icon: TrendingUp },
-  { label: 'More', path: '/more', icon: LayoutGrid },
+  { label: 'Profile',    path: '/profile',    icon: User },
 ];
 
 export default function BottomNav() {
@@ -21,7 +20,7 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 vantoris-glass-nav"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-1">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         {navItems.map(item => {
           const isActive = item.path === '/'
             ? location.pathname === '/'
@@ -31,7 +30,7 @@ export default function BottomNav() {
             <Link
               key={item.path}
               to={getTabPath(item.path)}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-300 ${
+              className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-300 ${
                 isActive ? 'text-brass' : 'text-gray hover:text-foreground'
               }`}
             >
